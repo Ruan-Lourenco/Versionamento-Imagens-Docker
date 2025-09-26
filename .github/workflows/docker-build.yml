@@ -5,8 +5,8 @@ on:
     branches:
       - main
   # opcional: publicar também em tags
- 	 tags:
-           - 'v*'
+    tags:
+      - 'v*'
 
 jobs:
   build:
