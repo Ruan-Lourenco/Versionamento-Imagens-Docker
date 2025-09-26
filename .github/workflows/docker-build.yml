@@ -53,3 +53,4 @@ jobs:
         run: |
           docker pull ${{ needs.build.outputs.image }}
           docker image inspect ${{ needs.build.outputs.image }}
+
