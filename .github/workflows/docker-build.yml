@@ -60,3 +60,11 @@ jobs:
           IMAGE_TAG="${{ needs.build.outputs.tag }}"
           echo "Inspecting image with tag: $IMAGE_TAG"
           docker image inspect ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:$IMAGE_TAG
+          
+      - name: Pull image from Docker Hub
+        run: |
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ needs.build.outputs.tag }}
+
+      - name: Inspect Docker Image
+        run: |
+          docker image inspect ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ needs.build.outputs.tag }}
