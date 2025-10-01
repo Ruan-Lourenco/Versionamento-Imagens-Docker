@@ -11,8 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read    # necessário para checkout
-      packages: write   # permite criar/push de imagens no GHCR
+      contents: read
+      packages: write
     outputs:
       image: ${{ steps.build-and-push.outputs.image }}
 
@@ -22,6 +22,11 @@ jobs:
 
       - name: Set lowercase owner
         run: echo "OWNER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Sanitize ref name for Docker tag
+        run: |
+          REF_TAG=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/_' '--')
+          echo "REF_TAG=$REF_TAG" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
@@ -37,11 +42,15 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ env.REF_TAG }}
             ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:latest
+
   inspect:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
@@ -56,5 +65,5 @@ jobs:
 
       - name: Inspect Docker Image
         run: |
-          docker pull ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ github.ref_name }}
-          docker image inspect ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ github.ref_name }}
+          docker pull ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ env.REF_TAG }}
+          docker image inspect ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ env.REF_TAG }}
