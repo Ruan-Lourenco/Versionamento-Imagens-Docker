@@ -11,21 +11,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.build-and-push.outputs.image }}
+      tag: ${{ steps.sanitize-tag.outputs.tag }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Sanitize ref name for Docker tag
+        id: sanitize-tag
         run: |
-          # converte para lowercase, substitui caracteres inválidos por '-', remove '-' do início/fim
           REF_TAG=$(echo "${GITHUB_REF_NAME}" \
             | tr '[:upper:]' '[:lower:]' \
             | sed 's/[^a-z0-9.-]/-/g' \
             | sed 's/^-//' \
             | sed 's/-$//')
-          echo "REF_TAG=$REF_TAG" >> $GITHUB_ENV
+          # ALTERAÇÃO 3: Usar $GITHUB_OUTPUT para criar uma saída para este step
+          echo "tag=$REF_TAG" >> $GITHUB_OUTPUT
           echo "Sanitized REF_TAG: $REF_TAG"
 
       - name: Log in to Docker Hub
@@ -41,7 +42,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ env.REF_TAG }}
+            # ALTERAÇÃO 4: Usar a saída do step de sanitização
+            ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ steps.sanitize-tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:latest
 
   inspect:
@@ -49,20 +51,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Debug Docker Tags
-        run: |
-          echo "Tentando puxar a imagem com tag: ${{ env.REF_TAG }}"
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ env.REF_TAG }} || echo "Imagem não encontrada"
-
       - name: Inspect Docker Image
         run: |
-          docker image inspect ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ env.REF_TAG }}
+          IMAGE_TAG="${{ needs.build.outputs.tag }}"
+          echo "Inspecting image with tag: $IMAGE_TAG"
+          docker image inspect ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:$IMAGE_TAG
