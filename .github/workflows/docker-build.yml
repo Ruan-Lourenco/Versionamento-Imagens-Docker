@@ -55,5 +55,5 @@ jobs:
 
       - name: Inspect Docker Image
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/versionamento-imagens-docker:${{ github.ref_name }}
-          docker image inspect ghcr.io/${{ github.repository_owner }}/versionamento-imagens-docker:${{ github.ref_name }}
+          docker pull ghcr.io/${{ env.OWNER }}-lower/versionamento-imagens-docker:${{ github.ref_name }}
+          docker image inspect ghcr.io/${{ env.OWNER }}-lower/versionamento-imagens-docker:${{ github.ref_name }}
