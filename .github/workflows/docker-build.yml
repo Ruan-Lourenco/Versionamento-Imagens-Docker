@@ -19,7 +19,12 @@ jobs:
 
       - name: Sanitize ref name for Docker tag
         run: |
-          REF_TAG=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/_ ' '--')
+          # converte para lowercase, substitui caracteres inválidos por '-', remove '-' do início/fim
+          REF_TAG=$(echo "${GITHUB_REF_NAME}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's/[^a-z0-9.-]/-/g' \
+            | sed 's/^-//' \
+            | sed 's/-$//')
           echo "REF_TAG=$REF_TAG" >> $GITHUB_ENV
           echo "Sanitized REF_TAG: $REF_TAG"
 
@@ -55,7 +60,7 @@ jobs:
 
       - name: Debug Docker Tags
         run: |
-          echo "Verificando se a imagem existe no registry:"
+          echo "Tentando puxar a imagem com tag: ${{ env.REF_TAG }}"
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ env.REF_TAG }} || echo "Imagem não encontrada"
 
       - name: Inspect Docker Image
