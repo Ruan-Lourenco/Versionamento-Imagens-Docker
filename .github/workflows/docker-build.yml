@@ -43,7 +43,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ steps.sanitize-tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:latest
-
   inspect:
     needs: build
     runs-on: ubuntu-latest
@@ -55,15 +54,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Inspect Docker Image
+      # PASSO ATUALIZADO COM LÓGICA DE RETRY
+      - name: Pull image with retries
         run: |
-          IMAGE_TAG="${{ needs.build.outputs.tag }}"
-          echo "Inspecting image with tag: $IMAGE_TAG"
-          docker image inspect ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:$IMAGE_TAG
-          
-      - name: Pull image from Docker Hub
-        run: |
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ needs.build.outputs.tag }}
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/versionamento-imagens-docker:${{ needs.build.outputs.tag }}"
+          ATTEMPTS=0
+          MAX_ATTEMPTS=5
+          until docker pull $IMAGE_NAME; do
+            ATTEMPTS=$((ATTEMPTS + 1))
+            if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
+              echo "Falha ao puxar a imagem '$IMAGE_NAME' após $MAX_ATTEMPTS tentativas."
+              exit 1
+            fi
+            echo "Tentativa $ATTEMPTS falhou. Tentando novamente em 15 segundos..."
+            sleep 15
+          done
+          echo "Imagem '$IMAGE_NAME' puxada com sucesso!"
 
       - name: Inspect Docker Image
         run: |
