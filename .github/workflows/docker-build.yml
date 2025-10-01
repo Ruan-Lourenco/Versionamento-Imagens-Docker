@@ -10,6 +10,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read    # necessário para checkout
+      packages: write   # permite criar/push de imagens no GHCR
     outputs:
       image: ${{ steps.build-and-push.outputs.image }}
 
@@ -36,7 +39,6 @@ jobs:
           tags: |
             ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:${{ github.ref_name }}
             ghcr.io/${{ env.OWNER_LOWER }}/versionamento-imagens-docker:latest
-
   inspect:
     needs: build
     runs-on: ubuntu-latest
