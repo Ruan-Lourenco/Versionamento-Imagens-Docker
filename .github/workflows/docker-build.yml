@@ -1,5 +1,8 @@
 name: Build and Inspect Docker Image
 
+env:
+  OWNER: ${{ github.repository_owner }}
+
 on:
   push:
     branches:
@@ -31,7 +34,7 @@ jobs:
          context: .
          push: true
          tags: |
-          ghcr.io/${{ github.repository_owner }}/versionamento-imagens-docker:${{ github.ref_name }}
+          ghcr.io/${{ env.OWNER }}-lower/versionamento-imagens-docker:${{ github.ref_name }}
           ghcr.io/${{ github.repository_owner }}/versionamento-imagens-docker:latest
 
           
